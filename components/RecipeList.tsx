@@ -1,7 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { AnalysisResult, Recipe } from '../types';
-// Removed static import to prevent load-time crashes
-// import html2canvas from 'html2canvas';
 
 interface RecipeListProps {
   data: AnalysisResult;
@@ -90,9 +88,15 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
     setTimeout(async () => {
       try {
         if (cardRef.current) {
-          // Dynamic import to avoid initial load crashes
-          const html2canvasModule = await import('html2canvas');
-          const html2canvas = html2canvasModule.default || html2canvasModule;
+          // Access html2canvas from global window object (loaded via script tag in index.html)
+          // This avoids module resolution issues in Vercel/Production environments
+          const html2canvas = (window as any).html2canvas;
+
+          if (!html2canvas) {
+            alert("Paylaşım özelliği şu an yüklenemedi. Lütfen sayfayı yenileyip tekrar deneyin.");
+            setIsSharing(false);
+            return;
+          }
 
           const canvas = await html2canvas(cardRef.current, {
             scale: 2, // High resolution
@@ -100,7 +104,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
             backgroundColor: '#ffffff'
           });
 
-          canvas.toBlob(async (blob) => {
+          canvas.toBlob(async (blob: Blob | null) => {
             if (blob) {
               const file = new File([blob], `BuzdolabiSefi_${recipe.id || 'tarif'}.png`, { type: 'image/png' });
 
