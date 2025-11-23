@@ -1,0 +1,7 @@
+{
+  "name": "Buzdolabı Şefi (Fridge Chef)",
+  "description": "Buzdolabınızdaki malzemelerin fotoğrafını çekin, yapay zeka destekli tasarruflu ve lezzetli tarifler alın. Gıda israfını önleyin, bütçenizi koruyun.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
