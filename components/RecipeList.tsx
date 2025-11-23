@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { AnalysisResult, Recipe } from '../types';
-import html2canvas from 'html2canvas';
+// Removed static import to prevent load-time crashes
+// import html2canvas from 'html2canvas';
 
 interface RecipeListProps {
   data: AnalysisResult;
@@ -11,9 +12,9 @@ interface RecipeListProps {
 
 export const RecipeList: React.FC<RecipeListProps> = ({ data, onReset, favorites, onToggleFavorite }) => {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 animate-fade-in">
+    <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Detected Ingredients Section */}
-      <div className="mb-12 text-center">
+      <div className="mb-12 text-center animate-fade-in-up">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Tespit Edilen Malzemeler</h2>
         <div className="flex flex-wrap justify-center gap-2">
           {data.detectedIngredients.map((item, index) => (
@@ -32,18 +33,23 @@ export const RecipeList: React.FC<RecipeListProps> = ({ data, onReset, favorites
         {data.recipes.map((recipe, index) => {
           const isFav = favorites.some(fav => fav.id === recipe.id);
           return (
-            <RecipeCard 
+            <div 
               key={index} 
-              recipe={recipe} 
-              isFavorite={isFav} 
-              onToggleFavorite={() => onToggleFavorite(recipe)} 
-            />
+              className="opacity-0 animate-fade-in-up"
+              style={{ animationDelay: `${index * 150}ms` }}
+            >
+              <RecipeCard 
+                recipe={recipe} 
+                isFavorite={isFav} 
+                onToggleFavorite={() => onToggleFavorite(recipe)} 
+              />
+            </div>
           );
         })}
       </div>
 
       {/* Action Button */}
-      <div className="mt-16 text-center">
+      <div className="mt-16 text-center animate-fade-in-up" style={{ animationDelay: '600ms' }}>
         <button
           onClick={onReset}
           className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white rounded-full font-bold shadow-lg hover:bg-gray-800 transition-all hover:-translate-y-1"
@@ -84,6 +90,10 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
     setTimeout(async () => {
       try {
         if (cardRef.current) {
+          // Dynamic import to avoid initial load crashes
+          const html2canvasModule = await import('html2canvas');
+          const html2canvas = html2canvasModule.default || html2canvasModule;
+
           const canvas = await html2canvas(cardRef.current, {
             scale: 2, // High resolution
             useCORS: true,
@@ -119,7 +129,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
         }
       } catch (error) {
         console.error('Screenshot failed:', error);
-        alert('Görsel oluşturulamadı, lütfen tekrar deneyin.');
+        alert('Görsel oluşturulamadı, tarayıcınız desteklemiyor olabilir.');
       } finally {
         setIsSharing(false); // Show buttons again
       }
