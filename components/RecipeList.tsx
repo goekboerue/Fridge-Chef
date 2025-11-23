@@ -88,13 +88,15 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
     setTimeout(async () => {
       try {
         if (cardRef.current) {
-          // Dynamic Import: Only load the library when user clicks the button.
-          // This prevents "White Screen" errors on initial load.
-          const html2canvasModule = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
-          const html2canvas = html2canvasModule.default;
+          // Use global html2canvas loaded from script tag in index.html
+          // casting window as any to avoid TS errors without installing types
+          const html2canvas = (window as any).html2canvas;
 
           if (!html2canvas) {
-            throw new Error("Library failed to load");
+            console.error("html2canvas library not found");
+            alert("Paylaşım aracı yüklenemedi. Lütfen sayfayı yenileyip tekrar deneyin.");
+            setIsSharing(false);
+            return;
           }
 
           const canvas = await html2canvas(cardRef.current, {
