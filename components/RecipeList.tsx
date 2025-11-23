@@ -88,14 +88,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
     setTimeout(async () => {
       try {
         if (cardRef.current) {
-          // Access html2canvas from global window object (loaded via script tag in index.html)
-          // This avoids module resolution issues in Vercel/Production environments
-          const html2canvas = (window as any).html2canvas;
+          // Dynamic Import: Only load the library when user clicks the button.
+          // This prevents "White Screen" errors on initial load.
+          const html2canvasModule = await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm');
+          const html2canvas = html2canvasModule.default;
 
           if (!html2canvas) {
-            alert("Paylaşım özelliği şu an yüklenemedi. Lütfen sayfayı yenileyip tekrar deneyin.");
-            setIsSharing(false);
-            return;
+            throw new Error("Library failed to load");
           }
 
           const canvas = await html2canvas(cardRef.current, {
@@ -133,7 +132,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, isFavorite, onTo
         }
       } catch (error) {
         console.error('Screenshot failed:', error);
-        alert('Görsel oluşturulamadı, tarayıcınız desteklemiyor olabilir.');
+        alert('Görsel oluşturulamadı. Lütfen tekrar deneyin.');
       } finally {
         setIsSharing(false); // Show buttons again
       }
