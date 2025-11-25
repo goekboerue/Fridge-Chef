@@ -1,10 +1,17 @@
-
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Recipe, AnalysisResult, FilterOptions } from "../types";
 
-// Initialize Gemini Client
-// Note: In a production environment, ensure process.env.API_KEY is set.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization to prevent top-level errors
+let ai: GoogleGenAI | null = null;
+
+const getAiClient = () => {
+  if (!ai) {
+    // We use a fallback empty string to prevent constructor crash, 
+    // but the API call will fail gracefully in the try-catch block if key is missing.
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  }
+  return ai;
+};
 
 const recipeSchema: Schema = {
   type: Type.OBJECT,
@@ -40,6 +47,8 @@ const recipeSchema: Schema = {
 
 export const analyzeFridgeImage = async (base64Image: string, filters: FilterOptions): Promise<AnalysisResult> => {
   try {
+    const client = getAiClient();
+    
     // Remove header if present (e.g., "data:image/jpeg;base64,")
     const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
 
@@ -69,7 +78,7 @@ export const analyzeFridgeImage = async (base64Image: string, filters: FilterOpt
         break;
     }
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: "gemini-2.5-flash",
       contents: {
         parts: [
@@ -118,8 +127,9 @@ export const analyzeFridgeImage = async (base64Image: string, filters: FilterOpt
     const result = JSON.parse(response.text) as AnalysisResult;
     return result;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
-    throw new Error("Görüntü analiz edilirken bir hata oluştu. Lütfen tekrar deneyin.");
+    // User friendly error message
+    throw new Error(error.message || "Görüntü analiz edilirken bir hata oluştu. Lütfen tekrar deneyin.");
   }
 };
